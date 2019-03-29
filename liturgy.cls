@@ -1,8 +1,15 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{liturgy}[2019/03/25 Liturgy LaTeX class]
 
-\LoadClass[a5paper]{article}
-\RequirePackage[margin=0.5in,heightrounded]{geometry}
+\DeclareOption{longa4booklet}{\PassOptionsToPackage{a4paper}{geometry}\PassOptionsToPackage{paperwidth=0.5\paperwidth}{geometry}}
+%\DeclareOption{booklet}{\PassOptionsToPackage{print}{booklet}}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
+\ProcessOptions\relax
+
+\LoadClass{article}
+\RequirePackage[margin=0.2in,heightrounded]{geometry}
+\RequirePackage[heightrounded]{geometry}
+%RequirePackage[print]{booklet}
 \RequirePackage{amssymb}
 \RequirePackage{environ}
 \RequirePackage{listofitems}
@@ -10,23 +17,24 @@
 \RequirePackage{etoolbox}
 \RequirePackage[british]{babel}
 \RequirePackage[autostyle=false, english=american]{csquotes}
-
-\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
-\ProcessOptions\relax
+\RequirePackage{longtable}
+\RequirePackage{tabu}
+\RequirePackage[nomessages]{fp}
 
 \flushbottom
 
 \MakeOuterQuote{"} %"
+  %}
 
-\tolerance=500
-\hyphenpenalty=10000
+  \tolerance=500
+  \hyphenpenalty=10000
 
-\newcommand{\vgap}{\vspace{0.5\baselineskip}}
+  \newcommand{\vgap}{\vspace{0.5\baselineskip}}
 
-\newenvironment{leader}{
-  \par\ignorespaces
-}{
-}
+  \newenvironment{leader}{
+    \par\ignorespaces
+  }{
+  }
 
 \newenvironment{all}{
   \bfseries
@@ -36,6 +44,7 @@
 \newcommand{\inlineall}[1]{\textbf{#1}}
 
 \newcommand{\instruction}[1]{{
+\vgap
   \small
     \itshape
     \centering
@@ -72,6 +81,7 @@
   \par
 }{
   \par
+  \vgap
 }
 
 \newcommand{\parseresponsesbody}[1]{
@@ -111,5 +121,44 @@ Error: Invalid line start of \x
     \Collect@Body\parseresponsesbody
 }{
   \par
+  \vspace{-\baselineskip}
+  \vgap
+}
+
+\newcommand{\listgetsafe}[4]{
+  \FPifgt{#1}{#3}
+#4
+  \else
+#2[#1]
+    \fi
+}
+
+\newcommand{\sidebyside}[3]{
+  \setsepchar{\\}
+  \ignoreemptyitems
+    \readlist*\leftlines{#1}
+  \readlist*\centerlines{#2}
+  \readlist*\rightlines{#3}
+  \FPmax\n{\leftlineslen}{\centerlineslen}
+  \FPmax\n{\n}{\rightlineslen}
+  \FPeval\n{clip(n + 1)}
+  \FPset\i{1}
+
+  %   \def\lines{}
+  \newtoks\lines
+    \newcommand{\addtolines}[1]{\lines=\expandafter{\the\lines##1}}
+  \loop
+    \FPiflt{\i}{\n}
+  \expandafter\addtolines\expandafter{\expandafter\listgetsafe\expandafter{\i}{\leftlines}{\leftlineslen}{} &}
+  \expandafter\addtolines\expandafter{\expandafter\listgetsafe\expandafter{\i}{\centerlines}{\centerlineslen}{} &}
+  \expandafter\addtolines\expandafter{\expandafter\listgetsafe\expandafter{\i}{\rightlines}{\rightlineslen}{} \\}
+  \FPeval\i{clip(i + 1)}
+  \repeat
+
+    \setlength{\LTpre}{0pt}
+  \setlength{\LTpost}{0pt}
+  \begin{longtabu}{XcX}
+  \the\lines
+    \end{longtabu}
 }
 
